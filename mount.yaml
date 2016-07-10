@@ -1,0 +1,20 @@
+---
+- hosts: rpi
+  remote_user: pi
+  become : yes
+
+  tasks:
+      - name : unmounting - if needed
+        mount : "name=/mnt/usb/ src=/dev/sda1 fstype=ext4 state=unmounted"
+
+      - name : formating usb key
+        command : "mkfs.ext4 /dev/sda1"
+
+      - name : make mounting point
+        file: "path=/mnt/usb state=directory mode=0777"
+
+      - name : mounting
+        mount : "name=/mnt/usb/ src=/dev/sda1 fstype=ext4 state=mounted"
+
+      - name : set /mnt/usb owned by pi
+        file : "path=/mnt/usb owner=pi group=pi"

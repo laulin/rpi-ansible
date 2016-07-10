@@ -1,0 +1,36 @@
+---
+    # will not works until es code is updated :
+    # http://www.clarenceho.net/2016/06/adding-seccomp-support-to-elasticsearch.html
+- hosts: rpi
+  remote_user: pi
+  become : yes
+
+  vars:
+      cluster_name : "datamining"
+
+  tasks:
+      - name : check es package
+        stat : "path=/tmp/elasticsearch-2.3.4.deb"
+        register : "es_downloaded"
+
+      - name : download es
+        get_url : "url=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.3.4/elasticsearch-2.3.4.deb dest=/tmp/elasticsearch-2.3.4.deb"
+        when: not es_downloaded.stat.exists
+
+      - name : install java
+        apt : "name=openjdk-8-jre state=present"
+
+      - name : install es
+        apt : "deb=/tmp/elasticsearch-2.3.4.deb state=present"
+
+      - name : make es home
+        file: "path=/mnt/usb/elasticsearch state=directory owner=elasticsearch group=elasticsearch mode=0777"
+
+      - name : set configuration
+        template : src="./fs/etc/elasticsearch/elasticsearch.yml.j2" dest="/etc/elasticsearch/elasticsearch.yml" group=elasticsearch
+
+      - name : restart service
+        service : "name=elasticsearch state=restarted"
+
+      - name : check service
+        command : "service elasticsearch status"
